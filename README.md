@@ -1,4 +1,4 @@
-# ConGen2022 - Correcting for Multiple Testing
+# ConGen2022 - Part 1: Correcting for Multiple Testing
 Arun Sethuraman, PhD
 San Diego State University
 asethuraman@sdsu.edu
@@ -291,3 +291,59 @@ Thought Exercise:
 
 What do you determine? Do you find any outlier loci? If you were interpreting these plainly based on p-values, would you identify outliers?
 What if you had done the same analyses, but with a different q threshold? If you were only using the Tajima's D/Fst/Diversity outliers, how would your inference change?
+
+
+# ConGen2022 - Part 2: PPP - The PopGen Pipeline Platform
+Arun Sethuraman, PhD
+San Diego State University
+asethuraman@sdsu.edu
+Twitter: @arunsethuraman
+
+Let's be real - it is becoming increasingly difficult to create reproducible workflows in population genomics. We developed the Popgen Pipeline Platform (PPP) - https://ppp.readthedocs.io/en/latest/index.html with the goal of reducing the computational expertise required for conducting population genomic analyses. The PPP was designed as a collection of scripts that facilitate common population genomic workflows in a consistent and standardized environment. Functions were developed to encompass entire workflows, including: input preparation, file format conversion, various population genomic analyses, and output generation. By facilitating entire workflows, the PPP offers several benefits to prospective end users - it reduces the need of redundant in-house software and scripts that would require development time and may be error-prone, or incorrect, depending on the expertise of the investigator. The platform has also been developed with reproducibility and extensibility of analyses in mind. Better yet, coming 2022 - we have a new Galaxy Project (www.usegalaxy.org) implementation of PPP, which will make your population genomic analyses that much easier with an accessible web-browser based GUI.
+
+# Structure of PPP
+
+<img width="334" alt="PPP structure" src="https://ppp.readthedocs.io/en/latest/_images/PPP_Pipeline_Figure.png">
+
+# Example of PPP analyses using the chimpanzee dataset
+
+We will utilize the same dataset from our first set of exercises to perform a series of analyses using PPP. Specifically, the script below will (1) create different model files (containing population and individual designations), (2) filter the provided VCF file based on a variety of conditions, (3) calculate summary statistics, (4) phase, (5) convert the dataset into a format readable by TreeMix (https://bitbucket.org/nygcresearch/treemix/wiki/Home).
+
+```Shell
+#Let's do some housekeeping of the VCF file first - bgzip + tabix indexing provides a convenient base for all further analyses
+bgzip -c chimps.vcf > chimps.vcf.gz
+tabix -p vcf chimps.vcf.gz
+
+#Creating Model Files
+#Create a model file called 2pop.model only containing the P.t.verus and P.t.troglodytes individuals
+model_creator.py --model 2pop --model-pop-file 2pop 2pops.txt --pop-ind-file Verus verus.txt --pop-ind-file Troglodytes troglodytes.txt --out 2pop.model
+#Create a model file called 3pop.model all three subspecies
+model_creator.py --model 3pop --model-pop-file 3pop 3pops.txt --pop-ind-file Verus verus.txt --pop-ind-file Troglodytes troglodytes.txt --pop-ind-file Schweinfurthii schweinfurthii.txt --out 3pop.model
+
+#Filtering the VCF file to output only bi-allelic sites, and only P.t.verus and P.t.troglodytes individuals
+vcf_filter.py --vcf chimps.vcf.gz --filter-only-biallelic --filter-include-indv-file verus.txt --filter-include-indv-file troglodytes.txt --out verustrog.vcf.gz --out-format vcf.gz
+
+#Perform a series of calculations of summary statistics a) Tajima's D in windows of 10kbps, b) per site estimates of Weir and Cockerham's pairwise Fst values between each pair of subspecies
+vcf_calc.py --vcf verustrog.vcf.gz --calc-statistic TajimaD --statistic-window-size 10000 --out verustrogtajima
+
+vcf_calc.py --vcf chimps.vcf --model-file 3pop.model --model 3pop --calc-statistic weir-fst --out 3popsfst
+
+#Use SHAPEIT to phase the unphased VCF file - https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.html
+vcf_phase.py --vcf chimps.vcf --phase-algorithm shapeit
+
+#Convert the VCF file into a format readable by TREEMIX
+vcf_to_treemix.py --vcf chimps.vcf.gz --model-file 3pop.model --modelname 3pop --out chimpstreemix
+
+```
+
+#Exercise 
+Time to get creative - write a PPP pipeline to perform a set of analyses that you envision would work with your own data (assuming that you are all working with VCF files here). Let's chat!
+
+
+
+
+
+
+
+
+
