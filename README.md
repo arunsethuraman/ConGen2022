@@ -336,7 +336,7 @@ vcf_to_treemix.py --vcf chimps.vcf.gz --model-file 3pop.model --modelname 3pop -
 
 ```
 
-#Exercise 
+# Exercise 
 Time to get creative - write a PPP pipeline to perform a set of analyses that you envision would work with your own data (assuming that you are all working with VCF files here). Let's chat!
 
 
